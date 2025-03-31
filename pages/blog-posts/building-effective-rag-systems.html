@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Building Effective RAG Systems | Rithwik Shetty</title>
+  <link rel="stylesheet" href="../../assets/css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-container">
+      <a href="../../index.html" class="logo">RS</a>
+      <div class="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="../../index.html">About</a></li>
+          <li><a href="../blog.html" class="active">Blog</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container">
+      <div class="project-detail">
+        <div class="project-header">
+          <h1>Building Effective Retrieval-Augmented Generation (RAG) Systems</h1>
+          <p class="project-date">November 22, 2024</p>
+          
+          <div class="project-technologies">
+            <span>AI</span>
+            <span>Large Language Models</span>
+            <span>Vector Databases</span>
+            <span>Knowledge Retrieval</span>
+          </div>
+        </div>
+        
+        <div class="project-content">
+          <p>Retrieval-Augmented Generation (RAG) has emerged as a powerful paradigm for enhancing Large Language Models (LLMs) with external knowledge. This approach allows AI systems to access and leverage information beyond their training data, improving factuality and reducing hallucinations. In this article, we'll explore best practices for building effective RAG systems.</p>
+          
+          <h2>1. Understanding RAG Architecture</h2>
+          <p>At its core, a RAG system combines a retrieval component with a generative model. When a query is received, the system first retrieves relevant information from a knowledge base, then passes this context to the LLM to generate a response. This architecture provides several advantages:</p>
+          
+          <ul>
+            <li>Factual accuracy: LLMs can ground their responses in retrieved information</li>
+            <li>Knowledge recency: Access to up-to-date information beyond the model's training cutoff</li>
+            <li>Domain specialization: Ability to incorporate domain-specific knowledge</li>
+            <li>Reduced hallucinations: External knowledge helps constrain model output to facts</li>
+          </ul>
+          
+          <h2>2. Vector Databases and Embedding Models</h2>
+          <p>The retrieval component of a RAG system typically relies on vector embeddings and semantic search. Here's how to approach this crucial element:</p>
+          
+          <p>The quality of your embeddings directly impacts retrieval performance. For general-purpose text, models like OpenAI's text-embedding-ada-002 or Cohere's embed-multilingual-v2.0 work well. For specialized domains, fine-tuning embedding models on domain-specific data can yield significant improvements.</p>
+          
+          <p>Popular vector database options include:</p>
+          <ul>
+            <li>Pinecone: Managed vector database with excellent scaling capabilities</li>
+            <li>Chroma: Lightweight, open-source embeddings database</li>
+            <li>Weaviate: Open-source vector search engine with filtering capabilities</li>
+            <li>FAISS: Facebook AI's similarity search library for efficient vector operations</li>
+          </ul>
+          
+          <h2>3. Implementation Example: Basic RAG with LangChain</h2>
+          <p>Here's a simplified example of implementing a RAG system using Python with LangChain and ChromaDB:</p>
+          
+          <pre><code>
+import os
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Chroma
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.llms import OpenAI
+from langchain.chains import RetrievalQA
+from langchain.document_loaders import DirectoryLoader
+
+# Load documents
+loader = DirectoryLoader('./documents/', glob="**/*.txt")
+documents = loader.load()
+
+# Split documents into chunks
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,
+    chunk_overlap=200
+)
+chunks = text_splitter.split_documents(documents)
+
+# Create vector store
+embedding_function = OpenAIEmbeddings()
+vectorstore = Chroma.from_documents(
+    documents=chunks,
+    embedding=embedding_function,
+    persist_directory="./chroma_db"
+)
+
+# Setup retrieval chain
+llm = OpenAI(temperature=0)
+retriever = vectorstore.as_retriever(
+    search_type="similarity",
+    search_kwargs={"k": 5}
+)
+qa_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    chain_type="stuff",
+    retriever=retriever
+)
+
+# Query the system
+query = "What are the key benefits of using RAG systems?"
+response = qa_chain.run(query)
+print(response)
+          </code></pre>
+          
+          <h2>4. Advanced RAG Techniques</h2>
+          <p>While basic RAG implementations work well, several advanced techniques can substantially improve performance:</p>
+          
+          <h3>Chunking Strategies</h3>
+          <p>Document chunking significantly affects retrieval quality. Consider these approaches:</p>
+          <ul>
+            <li>Semantic chunking: Split documents based on semantic boundaries rather than fixed character counts</li>
+            <li>Hierarchical chunking: Create multiple representations of documents at different granularities</li>
+            <li>Sliding window approaches: Use overlapping chunks to preserve context across boundaries</li>
+          </ul>
+          
+          <h3>Query Transformation</h3>
+          <p>User queries aren't always optimized for retrieval. Techniques like query expansion, reformulation, or decomposition can improve recall:</p>
+          
+          <pre><code>
+from langchain.retrievers.multi_query import MultiQueryRetriever
+
+retriever_from_llm = MultiQueryRetriever.from_llm(
+    retriever=vectorstore.as_retriever(),
+    llm=OpenAI(temperature=0)
+)
+
+# This will generate multiple search queries from the original
+results = retriever_from_llm.get_relevant_documents(
+    "How does RAG help with factual consistency?"
+)
+          </code></pre>
+          
+          <h2>5. Evaluation and Improvement</h2>
+          <p>Evaluating RAG systems requires assessing both retrieval and generation quality:</p>
+          
+          <ul>
+            <li>Retrieval metrics: Precision, recall, nDCG, and mean reciprocal rank</li>
+            <li>Generation metrics: BLEU, ROUGE, BERTScore, and factual consistency measures</li>
+            <li>Human evaluation: Assessing relevance, helpfulness, and factuality of responses</li>
+          </ul>
+          
+          <p>Implement a systematic evaluation process with representative test queries. Use tools like RAGAS or build custom evaluation pipelines to continuously monitor performance.</p>
+          
+          <h2>6. Addressing Common Challenges</h2>
+          <p>RAG systems face several challenges that require careful consideration:</p>
+          
+          <ul>
+            <li>Retrieval of irrelevant context: Improve with better embedding models and reranking</li>
+            <li>Context window limitations: Implement efficient summarization or hierarchical retrieval</li>
+            <li>Contradictory information: Develop strategies for source prioritization and conflict resolution</li>
+            <li>Computational efficiency: Optimize with techniques like hybrid search and efficient indexing</li>
+          </ul>
+          
+          <h2>Conclusion</h2>
+          <p>Retrieval-Augmented Generation represents a significant advancement in making LLMs more accurate, reliable, and useful for real-world applications. By carefully designing each component of the RAG pipeline—from document preprocessing to retrieval strategies and response generation—you can build systems that combine the strengths of knowledge bases with the flexibility of generative AI.</p>
+          
+          <p>As the field evolves, we can expect further innovations in embedding techniques, retrieval algorithms, and methods for integrating structured and unstructured knowledge sources. The future of AI lies in these hybrid systems that can reliably access, reason over, and generate from vast repositories of knowledge.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <p>© 2025 Rithwik Shetty</p>
+        <div class="social-links">
+          <a href="https://github.com/rithwikshetty" aria-label="GitHub" target="_blank"><i class="fab fa-github"></i></a>
+          <a href="https://linkedin.com/in/rithwikshetty" aria-label="LinkedIn" target="_blank"><i class="fab fa-linkedin"></i></a>
+          <a href="mailto:rithwikshetty96@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../../assets/js/script.js"></script>
+</body>
+</html> 

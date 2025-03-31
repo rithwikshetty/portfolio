@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deploying AI Models at Scale | Rithwik Shetty</title>
+  <link rel="stylesheet" href="../../assets/css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-container">
+      <a href="../../index.html" class="logo">RS</a>
+      <div class="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="../../index.html">About</a></li>
+          <li><a href="../blog.html" class="active">Blog</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container">
+      <div class="project-detail">
+        <div class="project-header">
+          <h1>Deploying AI Models at Scale in the Cloud</h1>
+          <p class="project-date">December 5, 2024</p>
+          
+          <div class="project-technologies">
+            <span>Machine Learning Ops</span>
+            <span>Cloud Computing</span>
+            <span>AI Scaling</span>
+            <span>Model Serving</span>
+          </div>
+        </div>
+        
+        <div class="project-content">
+          <p>As AI applications move from experimental to production environments, effective deployment strategies become crucial. Successfully deploying machine learning models at scale requires specialized infrastructure, optimized serving techniques, and robust operational practices. This article covers key considerations and strategies for scaling AI systems in cloud environments.</p>
+          
+          <h2>1. AI Deployment Service Options</h2>
+          <p>Cloud providers offer various services optimized for different AI deployment scenarios, each with distinct tradeoffs in terms of control, scalability, and ease of use:</p>
+          
+          <h3>Managed ML Platforms</h3>
+          <p>These platforms handle most of the infrastructure complexity while providing specialized tooling for ML workflows.</p>
+          <ul>
+            <li>Examples: Amazon SageMaker, Google Vertex AI, Azure ML</li>
+            <li>You manage: Model definition, training scripts, deployment configurations</li>
+            <li>Provider manages: Infrastructure, scaling, monitoring, security patching</li>
+          </ul>
+          
+          <h3>Container Orchestration</h3>
+          <p>Deploy models as containerized applications managed by orchestration systems for greater control and flexibility.</p>
+          <ul>
+            <li>Examples: Kubernetes with Kubeflow, Amazon EKS, Google GKE, Azure AKS</li>
+            <li>You manage: Container configuration, orchestration, scaling policies</li>
+            <li>Provider manages: Underlying infrastructure, availability</li>
+          </ul>
+          
+          <h3>Serverless Inference</h3>
+          <p>Deploy models as event-triggered functions for cost-effective serving of sporadic inference requests.</p>
+          <ul>
+            <li>Examples: AWS Lambda with SageMaker, Google Cloud Functions, Azure Functions</li>
+            <li>You manage: Model packaging, function definition</li>
+            <li>Provider manages: Scaling, infrastructure, execution environment</li>
+          </ul>
+          
+          <h2>2. Model Serving Architectures</h2>
+          
+          <h3>Real-time Inference</h3>
+          <p>Designed for low-latency predictions where each request requires an immediate response. Implemented as synchronous API endpoints with SLAs for response times.</p>
+          
+          <h3>Batch Inference</h3>
+          <p>Process large volumes of prediction requests asynchronously. Ideal for scenarios where predictions aren't needed immediately, offering higher throughput and cost efficiency.</p>
+          
+          <h3>Streaming Inference</h3>
+          <p>Continuous processing of data streams for real-time predictions on incoming data. Useful for applications like anomaly detection or recommendation systems that process event streams.</p>
+          
+          <h2>3. Model Optimization Techniques</h2>
+          <p>Optimizing models for production deployment can dramatically improve performance and reduce costs:</p>
+          
+          <ul>
+            <li><strong>Quantization:</strong> Reduce numerical precision (e.g., from 32-bit to 8-bit) to decrease model size and improve inference speed</li>
+            <li><strong>Pruning:</strong> Remove unnecessary connections in neural networks to reduce complexity</li>
+            <li><strong>Knowledge Distillation:</strong> Train smaller "student" models to mimic larger "teacher" models</li>
+            <li><strong>Model Compilation:</strong> Convert models to optimized formats (TensorRT, ONNX Runtime, TF-TRT)</li>
+            <li><strong>Hardware Acceleration:</strong> Deploy on specialized hardware (GPUs, TPUs, or custom chips like AWS Inferentia)</li>
+          </ul>
+          
+          <h3>Example TensorFlow Lite Quantization:</h3>
+          <pre><code>
+import tensorflow as tf
+
+# Load a pre-trained model
+model = tf.keras.applications.MobileNetV2(weights='imagenet')
+
+# Convert to TF Lite format with quantization
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+converter.target_spec.supported_types = [tf.float16]
+
+# Quantize to 16-bit floating point
+quantized_model = converter.convert()
+
+# Save the quantized model
+with open('quantized_model.tflite', 'wb') as f:
+    f.write(quantized_model)
+
+# Analyze size difference
+original_size = model.count_params() * 4  # 4 bytes per float32
+quantized_size = len(quantized_model)
+print(f"Original model size: {original_size / 1024 / 1024:.2f} MB")
+print(f"Quantized model size: {quantized_size / 1024 / 1024:.2f} MB")
+print(f"Size reduction: {100 * (1 - quantized_size / original_size):.2f}%")
+          </code></pre>
+          
+          <h2>4. Containerizing ML Models for Deployment</h2>
+          <p>Containers provide a consistent environment for ML model serving, ensuring reliable operation across different environments:</p>
+          
+          <h3>Docker Container for ML Serving:</h3>
+          <pre><code>
+# Dockerfile for a TensorFlow Serving container
+FROM tensorflow/serving:latest
+
+# Copy model to the container
+COPY ./models/my_model /models/my_model
+
+# Set environment variables
+ENV MODEL_NAME=my_model
+ENV MODEL_BASE_PATH=/models
+
+# Expose the port for gRPC and REST API
+EXPOSE 8500
+EXPOSE 8501
+
+# Start TensorFlow Serving
+CMD ["tensorflow_model_server", \
+     "--port=8500", \
+     "--rest_api_port=8501", \
+     "--model_name=${MODEL_NAME}", \
+     "--model_base_path=${MODEL_BASE_PATH}/${MODEL_NAME}"]
+          </code></pre>
+          
+          <h2>5. Scaling Machine Learning Infrastructure</h2>
+          <p>Properly scaling ML services requires specialized approaches beyond standard web application scaling:</p>
+          
+          <h3>Horizontal Scaling</h3>
+          <p>Add more inference servers to handle increased prediction requests. Particularly important for stateless models where each prediction is independent.</p>
+          
+          <h3>GPU Sharing and Allocation</h3>
+          <p>Maximize GPU utilization by serving multiple models on the same GPU or using techniques like NVIDIA MPS (Multi-Process Service) or A10G Multi-Instance GPU (MIG).</p>
+          
+          <h3>Dynamic Batching</h3>
+          <p>Collect individual requests into batches to leverage GPU parallelism, dynamically adjusting batch sizes based on load. This significantly increases throughput at the cost of slight latency increases.</p>
+          
+          <h3>Example TF Serving Configuration with Dynamic Batching:</h3>
+          <pre><code>
+model_config_list: {
+  config: {
+    name: "object_detection",
+    base_path: "/models/object_detection/",
+    model_platform: "tensorflow",
+    model_version_policy: {
+      latest: {
+        num_versions: 2
+      }
+    }
+  }
+}
+
+batching_parameters: {
+  max_batch_size: 32,
+  batch_timeout_micros: 5000,
+  max_enqueued_batches: 100,
+  num_batch_threads: 8
+}
+          </code></pre>
+          
+          <h2>6. MLOps: Continuous Delivery for ML Models</h2>
+          <p>MLOps extends DevOps practices to machine learning, enabling reliable and automated model deployments:</p>
+          
+          <ul>
+            <li><strong>Model Versioning:</strong> Track model versions, hyperparameters, and training data</li>
+            <li><strong>CI/CD for ML:</strong> Automate testing, validation, and deployment of models</li>
+            <li><strong>A/B Testing:</strong> Deploy multiple model versions and route traffic to measure performance</li>
+            <li><strong>Canary Deployments:</strong> Gradually shift traffic to new model versions to minimize risk</li>
+            <li><strong>Rollback Capabilities:</strong> Quickly revert to previous model versions when issues arise</li>
+          </ul>
+          
+          <h2>7. Monitoring and Observability</h2>
+          <p>Comprehensive monitoring is crucial for ML systems due to the potential for model drift and performance degradation:</p>
+          
+          <h3>Key Metrics to Track:</h3>
+          <ul>
+            <li><strong>Model Performance:</strong> Accuracy, precision, recall, F1-score in production</li>
+            <li><strong>System Performance:</strong> Latency, throughput, error rates, resource utilization</li>
+            <li><strong>Data Drift:</strong> Changes in input data distribution compared to training data</li>
+            <li><strong>Prediction Drift:</strong> Changes in model output distribution over time</li>
+            <li><strong>Feature Importance:</strong> Tracking how feature contributions evolve</li>
+          </ul>
+          
+          <h3>Prometheus Monitoring Configuration Example:</h3>
+          <pre><code>
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'ml_model_api'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['model-service:8501']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        
+  - job_name: 'model_performance'
+    metrics_path: '/model-metrics'
+    static_configs:
+      - targets: ['monitoring-service:9090']
+          </code></pre>
+          
+          <h2>8. Cost Optimization for ML Workloads</h2>
+          <p>AI workloads can be expensive to run at scale. Consider these optimization strategies:</p>
+          
+          <ul>
+            <li><strong>Right-sizing:</strong> Match hardware to model requirements (CPU vs. GPU, memory, etc.)</li>
+            <li><strong>Spot Instances:</strong> Use discounted preemptible instances for fault-tolerant batch processing</li>
+            <li><strong>Caching:</strong> Implement prediction caching for frequently requested inputs</li>
+            <li><strong>Auto-scaling:</strong> Scale down model servers during periods of low demand</li>
+            <li><strong>Model Compression:</strong> Use smaller, optimized models for common use cases</li>
+            <li><strong>Reserved Instances:</strong> Purchase reserved capacity for consistent baseline loads</li>
+          </ul>
+          
+          <h2>Conclusion</h2>
+          <p>Successfully deploying AI models at scale requires a thoughtful approach that balances performance, cost, and operational complexity. By leveraging cloud-native technologies, implementing robust MLOps practices, and continuously optimizing your serving infrastructure, you can build scalable AI systems that deliver value reliably.</p>
+          
+          <p>As the field evolves, stay informed about emerging tools and practices in model serving. The landscape of ML deployment is rapidly changing, with new techniques and platforms emerging to address the unique challenges of operating AI systems at scale.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <p>© 2025 Rithwik Shetty</p>
+        <div class="social-links">
+          <a href="https://github.com/rithwikshetty" aria-label="GitHub" target="_blank"><i class="fab fa-github"></i></a>
+          <a href="https://linkedin.com/in/rithwikshetty" aria-label="LinkedIn" target="_blank"><i class="fab fa-linkedin"></i></a>
+          <a href="mailto:rithwikshetty96@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../../assets/js/script.js"></script>
+</body>
+</html> 

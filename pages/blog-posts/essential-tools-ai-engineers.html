@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Essential Tools for AI Engineers | Rithwik Shetty</title>
+  <link rel="stylesheet" href="../../assets/css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-container">
+      <a href="../../index.html" class="logo">RS</a>
+      <div class="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="../../index.html">About</a></li>
+          <li><a href="../blog.html" class="active">Blog</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container">
+      <div class="project-detail">
+        <div class="project-header">
+          <h1>Essential Tools for AI Engineers and ML Practitioners</h1>
+          <p class="project-date">October 7, 2024</p>
+          
+          <div class="project-technologies">
+            <span>AI Tools</span>
+            <span>Machine Learning</span>
+            <span>Data Science</span>
+            <span>MLOps</span>
+          </div>
+        </div>
+        
+        <div class="project-content">
+          <p>The AI and machine learning landscape is evolving rapidly, with new tools emerging constantly. This article covers essential tools that can significantly enhance productivity and effectiveness for AI engineers and ML practitioners at all stages of the model lifecycle.</p>
+          
+          <h2>1. Data Processing and Exploration</h2>
+          <p>Effective data handling forms the foundation of successful ML projects:</p>
+          
+          <h3>Pandas and Polars</h3>
+          <p>These data manipulation libraries provide the building blocks for data cleaning and transformation:</p>
+          
+          <ul>
+            <li>Pandas: Industry standard with comprehensive documentation and ecosystem support</li>
+            <li>Polars: Newer alternative with faster performance on large datasets through parallel execution</li>
+          </ul>
+          
+          <h3>Example: Data Cleaning with Pandas</h3>
+          <pre><code>
+import pandas as pd
+import numpy as np
+
+# Load and clean a dataset
+def clean_dataset(file_path):
+    # Load data
+    df = pd.read_csv(file_path)
+    
+    # Handle missing values 
+    df = df.fillna({
+        'numerical_col': df['numerical_col'].median(),
+        'categorical_col': 'unknown'
+    })
+    
+    # Remove duplicates
+    df = df.drop_duplicates()
+    
+    # Convert dates to datetime
+    df['date_col'] = pd.to_datetime(df['date_col'])
+    
+    # Create features
+    df['day_of_week'] = df['date_col'].dt.dayofweek
+    
+    # Filter outliers (e.g., using IQR method)
+    Q1 = df['numerical_col'].quantile(0.25)
+    Q3 = df['numerical_col'].quantile(0.75)
+    IQR = Q3 - Q1
+    df = df[~((df['numerical_col'] < (Q1 - 1.5 * IQR)) | 
+              (df['numerical_col'] > (Q3 + 1.5 * IQR)))]
+    
+    return df
+          </code></pre>
+          
+          <h3>Exploratory Data Analysis: DuckDB and Streamlit</h3>
+          <p>Fast data querying and interactive visualization accelerate insights:</p>
+          
+          <ul>
+            <li>DuckDB: In-process SQL analytics database that works directly with Pandas</li>
+            <li>Streamlit: Create interactive data apps with minimal code</li>
+          </ul>
+          
+          <h2>2. Model Development Frameworks</h2>
+          <p>These frameworks streamline the process of building, training, and evaluating models:</p>
+          
+          <h3>PyTorch and Lightning</h3>
+          <p>A powerful combination for research and production:</p>
+          
+          <ul>
+            <li>PyTorch: Dynamic computation graph for flexible model development</li>
+            <li>Lightning: Eliminates boilerplate code while maintaining PyTorch flexibility</li>
+          </ul>
+          
+          <h3>Example: PyTorch Lightning Training Loop</h3>
+          <pre><code>
+import pytorch_lightning as pl
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.utils.data import DataLoader
+from torchvision import transforms, datasets
+
+class MNISTClassifier(pl.LightningModule):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 32, 3, 1)
+        self.conv2 = nn.Conv2d(32, 64, 3, 1)
+        self.fc1 = nn.Linear(9216, 128)
+        self.fc2 = nn.Linear(128, 10)
+        
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = F.max_pool2d(x, 2)
+        x = F.relu(self.conv2(x))
+        x = F.max_pool2d(x, 2)
+        x = torch.flatten(x, 1)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
+        
+    def training_step(self, batch, batch_idx):
+        x, y = batch
+        logits = self(x)
+        loss = F.cross_entropy(logits, y)
+        self.log('train_loss', loss)
+        return loss
+        
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        logits = self(x)
+        loss = F.cross_entropy(logits, y)
+        preds = torch.argmax(logits, dim=1)
+        acc = (preds == y).float().mean()
+        self.log('val_loss', loss)
+        self.log('val_acc', acc)
+        
+    def configure_optimizers(self):
+        return torch.optim.Adam(self.parameters(), lr=0.001)
+
+# Train model with minimal boilerplate
+model = MNISTClassifier()
+trainer = pl.Trainer(max_epochs=5, gpus=1)
+trainer.fit(model, train_dataloader, val_dataloader)
+          </code></pre>
+          
+          <h3>Hugging Face Transformers</h3>
+          <p>Essential for NLP and increasingly for other domains:</p>
+          
+          <ul>
+            <li>Access to thousands of pre-trained models via Model Hub</li>
+            <li>Consistent API for diverse architectures (BERT, GPT, T5, etc.)</li>
+            <li>Integration with major ML frameworks (PyTorch, TensorFlow, JAX)</li>
+          </ul>
+          
+          <h2>3. Experiment Tracking and Versioning</h2>
+          <p>Keep track of experiments, artifacts, and models:</p>
+          
+          <h3>Weights & Biases</h3>
+          <p>The most comprehensive experiment tracking platform:</p>
+          
+          <ul>
+            <li>Automatic logging of metrics, hyperparameters, and system information</li>
+            <li>Interactive visualization dashboards</li>
+            <li>Artifact versioning for datasets and models</li>
+            <li>Collaboration features for teams</li>
+          </ul>
+          
+          <h3>Example: W&B Integration</h3>
+          <pre><code>
+import wandb
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# Initialize a W&B run
+wandb.init(project="my-classification-project")
+
+# Define and log hyperparameters
+config = wandb.config
+config.n_estimators = 100
+config.max_depth = 10
+config.min_samples_split = 2
+
+# Train model
+model = RandomForestClassifier(
+    n_estimators=config.n_estimators,
+    max_depth=config.max_depth,
+    min_samples_split=config.min_samples_split
+)
+model.fit(X_train, y_train)
+
+# Log metrics
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+wandb.log({"accuracy": accuracy})
+
+# Log model as artifact
+model_artifact = wandb.Artifact("random_forest_model", type="model")
+model_path = "rf_model.pkl"
+joblib.dump(model, model_path)
+model_artifact.add_file(model_path)
+wandb.log_artifact(model_artifact)
+          </code></pre>
+          
+          <h3>DVC (Data Version Control)</h3>
+          <p>Git-like versioning for datasets and models:</p>
+          
+          <ul>
+            <li>Track large files outside of Git</li>
+            <li>Version datasets alongside code</li>
+            <li>Reproduce experiments with specific data versions</li>
+          </ul>
+          
+          <h2>4. Large Language Model Tools</h2>
+          <p>Essential tools for working with the latest generation of AI models:</p>
+          
+          <h3>LangChain and LlamaIndex</h3>
+          <p>Building blocks for LLM-powered applications:</p>
+          
+          <ul>
+            <li>LangChain: Framework for combining LLMs with other components</li>
+            <li>LlamaIndex: Data framework for connecting custom data to LLMs</li>
+          </ul>
+          
+          <h3>Example: Simple RAG with LangChain</h3>
+          <pre><code>
+from langchain.llms import OpenAI
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Chroma
+from langchain.chains import RetrievalQA
+from langchain.document_loaders import DirectoryLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+# Load and split documents
+loader = DirectoryLoader('./documents/')
+documents = loader.load()
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+texts = text_splitter.split_documents(documents)
+
+# Create vector store
+embeddings = OpenAIEmbeddings()
+vectordb = Chroma.from_documents(texts, embeddings)
+retriever = vectordb.as_retriever()
+
+# Create RAG chain
+llm = OpenAI(temperature=0)
+qa_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    chain_type="stuff",
+    retriever=retriever
+)
+
+# Query the system
+query = "What are the key benefits of using Retrieval-Augmented Generation?"
+result = qa_chain.run(query)
+print(result)
+          </code></pre>
+          
+          <h2>5. Model Deployment and Serving</h2>
+          <p>Tools for putting models into production:</p>
+          
+          <h3>BentoML</h3>
+          <p>Unified platform for model serving:</p>
+          
+          <ul>
+            <li>Package models with dependencies as self-contained "Bentos"</li>
+            <li>Deploy as microservices, serverless functions, or batch jobs</li>
+            <li>Automatic API generation with OpenAPI specifications</li>
+            <li>Model versioning and A/B testing capabilities</li>
+          </ul>
+          
+          <h3>Example: BentoML Service</h3>
+          <pre><code>
+import bentoml
+from bentoml.io import JSON, Image
+from pydantic import BaseModel
+import numpy as np
+from PIL import Image as PILImage
+
+# Define input/output schemas
+class ImageClassifierInput(BaseModel):
+    image_url: str
+
+class ImageClassifierOutput(BaseModel):
+    class_name: str
+    confidence: float
+
+# Create a BentoML service
+@bentoml.service(
+    resources={"gpu": 1},
+    traffic={"timeout": 10}
+)
+class ImageClassifier:
+    def __init__(self):
+        # Load model
+        self.model = bentoml.pytorch.load_model("efficientnet:latest")
+        self.model.eval()
+        
+        # Load class labels
+        with open("imagenet_classes.txt") as f:
+            self.classes = [line.strip() for line in f.readlines()]
+    
+    @bentoml.api(input=Image(), output=JSON())
+    def classify(self, img):
+        # Preprocess image
+        img = self.preprocess(img)
+        
+        # Make prediction
+        with torch.no_grad():
+            outputs = self.model(img)
+            _, predicted = outputs.max(1)
+        
+        class_name = self.classes[predicted.item()]
+        confidence = torch.nn.functional.softmax(outputs, dim=1)[0][predicted].item()
+        
+        return {"class_name": class_name, "confidence": float(confidence)}
+    
+    def preprocess(self, image):
+        # Implement preprocessing logic
+        # ...
+          </code></pre>
+          
+          <h2>6. Specialized ML Tools</h2>
+          
+          <h3>Gradio</h3>
+          <p>Create interactive demos for ML models with minimal code:</p>
+          
+          <ul>
+            <li>Rapid prototyping of model UIs</li>
+            <li>Easy sharing of demos with collaborators</li>
+            <li>Integration with Hugging Face Spaces for public hosting</li>
+          </ul>
+          
+          <h3>Vector Databases</h3>
+          <p>Essential for semantic search and RAG applications:</p>
+          
+          <ul>
+            <li>Pinecone: Managed vector database with easy scaling</li>
+            <li>Weaviate: Open-source vector search engine with filtering</li>
+            <li>Chroma: Lightweight embeddings database for local development</li>
+          </ul>
+          
+          <h2>Conclusion</h2>
+          <p>The tools covered in this article represent just a sampling of the rich ecosystem available to AI engineers and ML practitioners. As the field evolves rapidly, staying informed about new tools and approaches is essential for maintaining productivity and effectiveness.</p>
+          
+          <p>By leveraging these tools appropriately, you can streamline your workflow across the entire ML lifecycle—from data preparation and model development to deployment and monitoring. The key is to select tools that solve your specific challenges while integrating well with your existing workflow.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <p>© 2025 Rithwik Shetty</p>
+        <div class="social-links">
+          <a href="https://github.com/rithwikshetty" aria-label="GitHub" target="_blank"><i class="fab fa-github"></i></a>
+          <a href="https://linkedin.com/in/rithwikshetty" aria-label="LinkedIn" target="_blank"><i class="fab fa-linkedin"></i></a>
+          <a href="mailto:rithwikshetty96@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../../assets/js/script.js"></script>
+</body>
+</html> 
